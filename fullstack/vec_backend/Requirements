@@ -1,0 +1,18 @@
+# Core
+openai>=1.30.0
+pinecone-client>=3.2.0
+langchain>=0.2.0
+langchain-openai>=0.1.0
+langchain-community>=0.2.0
+
+# API server
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+
+# Utilities
+pandas>=2.0.0
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+tiktoken>=0.7.0
+tqdm>=4.66.0
+chardet>=5.0.0

@@ -1,0 +1,81 @@
+nohup: ignoring input
+[START] Initializing scraper...
+[PROGRESS] Loaded: 5200 channels, 1111.35 MB
+[INIT] Creating HTTP session with connection pooling...
+[INIT] Session created successfully
+[INIT] Scraper initialized
+[INIT] CDX API: https://index.commoncrawl.org/CC-MAIN-2026-04-index
+
+======================================================================
+YOUTUBE CHANNEL SCRAPER - ROBUST VERSION
+======================================================================
+Output: /home/ubuntu/youtube_channels.csv
+Size limit: 1024 MB
+Workers: 50
+======================================================================
+
+======================================================================
+[SEARCH] Starting search in Common Crawl index: CC-MAIN-2026-04
+[SEARCH] Fetching up to 5000 results per pattern
+======================================================================
+
+
+[SEARCH] Pattern: youtube.com/channel/* (Channel IDs)
+[SEARCH] Querying CDX API...
+[SEARCH] Making request to https://index.commoncrawl.org/CC-MAIN-2026-04-index
+[SEARCH] Response status: 200
+[SEARCH] Progress: 1000 results found so far...
+[SEARCH] Progress: 2000 results found so far...
+[SEARCH] Progress: 3000 results found so far...
+[SEARCH] Progress: 4000 results found so far...
+[SEARCH] ✓ Found 4963 unique results for Channel IDs
+
+[SEARCH] Pattern: youtube.com/@* (Handles)
+[SEARCH] Querying CDX API...
+[SEARCH] Making request to https://index.commoncrawl.org/CC-MAIN-2026-04-index
+[SEARCH] Response status: 200
+[SEARCH] Progress: 1000 results found so far...
+[SEARCH] Progress: 2000 results found so far...
+[SEARCH] Progress: 3000 results found so far...
+[SEARCH] Progress: 4000 results found so far...
+[SEARCH] ✓ Found 4927 unique results for Handles
+
+[SEARCH] Pattern: youtube.com/c/* (Custom URLs)
+[SEARCH] Querying CDX API...
+[SEARCH] Making request to https://index.commoncrawl.org/CC-MAIN-2026-04-index
+[SEARCH] Response status: 200
+[SEARCH] Progress: 1000 results found so far...
+[SEARCH] Progress: 2000 results found so far...
+[SEARCH] Progress: 3000 results found so far...
+[SEARCH] ✓ Found 3953 unique results for Custom URLs
+
+[SEARCH] Pattern: youtube.com/user/* (User pages)
+[SEARCH] Querying CDX API...
+[SEARCH] Making request to https://index.commoncrawl.org/CC-MAIN-2026-04-index
+[SEARCH] Response status: 200
+[SEARCH] Progress: 1000 results found so far...
+[SEARCH] Progress: 2000 results found so far...
+[SEARCH] Progress: 3000 results found so far...
+[SEARCH] Progress: 4000 results found so far...
+[SEARCH] ✓ Found 4928 unique results for User pages
+
+======================================================================
+[SEARCH] TOTAL: 18771 unique channel URLs found
+======================================================================
+
+
+[PROCESSING] Starting parallel download with 50 workers
+[PROCESSING] Processing 18771 channel pages
+
+
+[LIMIT] Reached 1024 MB limit. Stopping.
+
+======================================================================
+SCRAPING COMPLETE!
+Channels scraped: 5200
+Data downloaded: 1111.35 MB
+Failed: 0
+Time: 4.7 seconds
+Speed: 1109.7 channels/second
+Output: /home/ubuntu/youtube_channels.csv
+======================================================================

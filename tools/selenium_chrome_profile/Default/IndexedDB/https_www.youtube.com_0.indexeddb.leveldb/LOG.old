@@ -1,0 +1,10 @@
+2026/02/16-17:32:34.595 6664 Reusing MANIFEST C:\Users\shubh\Desktop\desktop\PROJECT SV\Project SV No Other Option\Project Kla\Project SV Web\tools\selenium_chrome_profile\Default\IndexedDB\https_www.youtube.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/16-17:32:34.595 6664 Recovering log #15
+2026/02/16-17:32:34.604 6664 Reusing old log C:\Users\shubh\Desktop\desktop\PROJECT SV\Project SV No Other Option\Project Kla\Project SV Web\tools\selenium_chrome_profile\Default\IndexedDB\https_www.youtube.com_0.indexeddb.leveldb/000015.log 
+2026/02/16-17:32:36.810 25f4 Level-0 table #20: started
+2026/02/16-17:32:36.834 25f4 Level-0 table #20: 1407945 bytes OK
+2026/02/16-17:32:36.836 25f4 Delete type=0 #15
+2026/02/16-17:32:40.659 25f4 Compacting 1@1 + 1@2 files
+2026/02/16-17:32:40.667 25f4 Generated table #21@1: 346 keys, 54945 bytes
+2026/02/16-17:32:40.667 25f4 Compacted 1@1 + 1@2 files => 54945 bytes
+2026/02/16-17:32:40.668 25f4 compacted to: files[ 0 0 1 0 0 0 0 ]
