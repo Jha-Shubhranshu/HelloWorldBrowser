@@ -8,7 +8,7 @@ import CreateSpaceModal from './components/modals/Createspacemodal'
 import { useSpaces, useCreateSpace } from './api/spacesApi'
 import type { SpaceCreate } from './api/types'
 
-type View = { type: 'home' } | { type: 'space'; id: string } | { type: 'search' }
+type View = { type: 'home' } | { type: 'space'; id: string } | { type: 'search'; query?: string }
 
 function App() {
   const [view, setView] = useState<View>({ type: 'home' })
@@ -31,6 +31,7 @@ function App() {
       <Header 
         onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} 
         onHome={() => setView({ type: 'home' })}
+        onGlobalSearch={(query) => setView({ type: 'search', query })}
       />
       
       <div style={styles.main}>
@@ -61,17 +62,8 @@ function App() {
           )}
 
           {view.type === 'search' && (
-            <SearchPage />
+            <SearchPage initialQuery={view.query} />
           )}
-
-          {/* Quick toggle for SearchPage (since it's not in sidebar yet) */}
-          <button 
-            style={styles.searchFab} 
-            onClick={() => setView(v => v.type === 'search' ? { type: 'home' } : { type: 'search' })}
-            title="Global Search"
-          >
-            {view.type === 'search' ? '✕' : '🔍'}
-          </button>
         </main>
       </div>
 
@@ -91,37 +83,23 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     height: '100vh',
+    width: '100%',
     background: 'var(--bg-app)',
     color: 'var(--text-1)',
+    overflow: 'hidden',
   },
   main: {
     display: 'flex',
     flex: 1,
+    width: '100%',
     overflow: 'hidden',
   },
   content: {
     flex: 1,
+    width: '100%',
     overflowY: 'auto',
     position: 'relative',
   },
-  searchFab: {
-    position: 'fixed',
-    bottom: '24px',
-    right: '24px',
-    width: '48px',
-    height: '48px',
-    borderRadius: '50%',
-    background: 'var(--accent)',
-    color: 'white',
-    border: 'none',
-    cursor: 'pointer',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '20px',
-    zIndex: 100,
-  }
 }
 
 export default App

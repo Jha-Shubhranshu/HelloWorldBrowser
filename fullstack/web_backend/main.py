@@ -23,10 +23,12 @@ from search.router import router as search_router
 from search.service import SearchService
 from spaces.router import router as spaces_router
 from prompts.router import router as prompts_router
+from ingestion.router import router as ingestion_router
 
 # Import models so SQLModel registers them before create_all
-import spaces.models   # noqa: F401
-import prompts.models  # noqa: F401
+import spaces.models      # noqa: F401
+import prompts.models     # noqa: F401
+import ingestion.models   # noqa: F401
 
 logging.basicConfig(
     level=logging.INFO,
@@ -67,6 +69,7 @@ def create_app() -> FastAPI:
     app.include_router(search_router)
     app.include_router(spaces_router)
     app.include_router(prompts_router)
+    app.include_router(ingestion_router)
 
     return app
 

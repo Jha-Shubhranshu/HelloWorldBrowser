@@ -1,11 +1,21 @@
-// src/pages/SearchPage.tsx
+import { useEffect } from 'react'
 import type { MetadataFilters, SearchResponse, VideoResult } from '../api/types'
 import { useSearch } from '../api/searchApi'
 import SearchBar from '../components/Searchbar'
 import VideoCard from '../components/Videocard'
 
-export default function SearchPage() {
+interface Props {
+  initialQuery?: string
+}
+
+export default function SearchPage({ initialQuery }: Props) {
   const { mutate, data, isPending, isError, error } = useSearch()
+
+  useEffect(() => {
+    if (initialQuery) {
+      mutate({ query: initialQuery, filters: {}, top_k: 5, use_llm: false })
+    }
+  }, [initialQuery, mutate])
 
   function handleSearch(query: string, filters: MetadataFilters, topK: number) {
     mutate({ query, filters, top_k: topK, use_llm: false })
@@ -13,18 +23,9 @@ export default function SearchPage() {
 
   return (
     <div style={styles.page}>
-      {/* Header */}
-      <header style={styles.header}>
-        <div style={styles.logoWrap}>
-          <span style={styles.logoMark}>◈</span>
-          <span style={styles.logoText}>Channel Scout</span>
-        </div>
-        <p style={styles.tagline}>Discover YouTube channels through semantic search</p>
-      </header>
-
       {/* Search */}
       <div style={styles.searchWrap}>
-        <SearchBar onSearch={handleSearch} isLoading={isPending} />
+        <SearchBar onSearch={handleSearch} isLoading={isPending} initialQuery={initialQuery} />
       </div>
 
       {/* States */}
@@ -130,8 +131,8 @@ function LoadingState() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: '100vh',
-    maxWidth: '900px',
-    margin: '0 auto',
+    width: '100%',
+    boxSizing: 'border-box',
     padding: '48px 24px 80px',
     display: 'flex',
     flexDirection: 'column',

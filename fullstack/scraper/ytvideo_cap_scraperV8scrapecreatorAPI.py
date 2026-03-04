@@ -17,6 +17,7 @@ from urllib.parse import urlparse, parse_qs
 
 import requests
 from bs4 import BeautifulSoup
+from youtube_transcript_api import YouTubeTranscriptApi
 
 
 class YouTubeExtractor:
@@ -132,6 +133,27 @@ class YouTubeExtractor:
         
         return description.strip(), upload_date.strip()
     
+    def has_english_transcript(self, video_id: str) -> bool:
+        """
+        Check if the video has an English transcript available for free.
+        This helps save ScrapeCreators API credits.
+        """
+        try:
+            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            # Check for manually created or auto-generated English transcripts
+            try:
+                transcript_list.find_transcript(['en'])
+                self.logger.info(f"✓ English transcript available for {video_id}")
+                return True
+            except:
+                # Try to see if any transcript can be translated to English
+                # but usually we want native/auto English for better quality
+                self.logger.info(f"✗ No English transcript found for {video_id}")
+                return False
+        except Exception as e:
+            self.logger.error(f"Error checking transcript availability for {video_id}: {e}")
+            return False
+
     def get_transcript_api(self, video_id: str, url: str) -> Tuple[Optional[str], str]:
         """
         Get transcript using ScrapeCreators API.
@@ -189,7 +211,7 @@ class YouTubeExtractor:
                 return None, ""
             else:
                 self.logger.error(f"API returned unexpected status code: {response.status_code}")
-                self.logger.debug(f"Response: {response.text[:200]}")
+                self.logger.error(f"Response Body: {response.text}")
                 return None, ""
                 
         except requests.exceptions.Timeout:
@@ -300,8 +322,15 @@ class YouTubeExtractor:
         description, upload_date = self.extract_metadata(html, url)
         description = self.clean_text(description)
         
-        # Get transcript using API
-        transcript, transcript_language = self.get_transcript_api(video_id, url)
+        # Check if English transcript is available before calling paid API
+        transcript = None
+        transcript_language = ""
+        
+        if self.has_english_transcript(video_id):
+            # Get transcript using API
+            transcript, transcript_language = self.get_transcript_api(video_id, url)
+        else:
+            self.logger.info(f"Skipping {video_id} - no English transcript available")
         
         if transcript:
             transcript = self.clean_text(transcript)

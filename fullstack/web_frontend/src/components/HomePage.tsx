@@ -75,11 +75,11 @@ function SpaceCard({ space, onClick }: { space: Space; onClick: () => void }) {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     padding: '48px 40px 80px',
-    maxWidth: '1100px',
-    margin: '0 auto',
     display: 'flex',
     flexDirection: 'column',
     gap: '40px',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   hero: {
     display: 'flex',

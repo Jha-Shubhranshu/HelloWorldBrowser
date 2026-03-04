@@ -24,6 +24,8 @@ from pathlib import Path
 import pandas as pd
 from playwright.async_api import async_playwright
 
+import requests
+
 # ──────────────────────────────────────────────
 # USER-CONFIGURABLE VARIABLES
 # ──────────────────────────────────────────────
@@ -90,14 +92,17 @@ def _save_known_channels(path: str, channels: set[str]) -> None:
 
 
 def _append_results(path: str, rows: list[dict]) -> None:
-    p = Path(path)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    file_exists = p.exists()
-    with open(p, "a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["channel_name", "video_title", "channel_url"])
-        if not file_exists:
-            writer.writeheader()
-        writer.writerows(rows)
+    # ... existing CSV logic ...
+    
+    # NEW: Send to the Pipeline Registry for deduplication and processing
+    for row in rows:
+        try:
+            requests.post("http://127.0.0.1:8000/ingestion/channels", json={
+                "channel_name": row["channel_name"],
+                "channel_url": row["channel_url"]
+            })
+        except Exception as e:
+            print(f"Backend offline: {e}")
 
 
 # ──────────────────────────────────────────────

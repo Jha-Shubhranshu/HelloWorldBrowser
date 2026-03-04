@@ -5,10 +5,11 @@ import type { MetadataFilters } from '../api/types'
 interface Props {
   onSearch: (query: string, filters: MetadataFilters, topK: number) => void
   isLoading: boolean
+  initialQuery?: string
 }
 
-export default function SearchBar({ onSearch, isLoading }: Props) {
-  const [query, setQuery]   = useState('')
+export default function SearchBar({ onSearch, isLoading, initialQuery }: Props) {
+  const [query, setQuery]   = useState(initialQuery || '')
   const [topK,  setTopK]    = useState(5)
   const [lang,  setLang]    = useState('')
   const [showFilters, setShowFilters] = useState(false)

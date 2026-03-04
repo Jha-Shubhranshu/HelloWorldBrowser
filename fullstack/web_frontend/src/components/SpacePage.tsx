@@ -187,11 +187,11 @@ export default function SpacePage({ spaceId, onBack }: Props) {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     padding: '32px 40px 80px',
-    maxWidth: '1000px',
-    margin: '0 auto',
     display: 'flex',
     flexDirection: 'column',
     gap: '32px',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   loading: {
     padding: '60px 40px',
