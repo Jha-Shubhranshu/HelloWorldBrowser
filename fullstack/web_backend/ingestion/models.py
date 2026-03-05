@@ -38,10 +38,13 @@ class Video(SQLModel, table=True):
     thumbnail_url:  Optional[str] = None
     length:         Optional[str] = None
     upload_date:    Optional[str] = None
+    description:    Optional[str] = None
+    category:       Optional[str] = None  # News, Education, Entertainment, Self Knowledge
     
     # Processing status
     status:         str      = Field(default="discovered")  # discovered, processing_transcript, processed, failed
     transcript:     Optional[str] = None
+    transcript_language: Optional[str] = None
     vector_id:      Optional[str] = None  # Reference to Pinecone ID
     
     last_attempt:   Optional[datetime] = None

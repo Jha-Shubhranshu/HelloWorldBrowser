@@ -50,6 +50,7 @@ class IngestionService:
             thumbnail_url=data.thumbnail_url,
             length=data.length,
             upload_date=data.upload_date,
+            description=data.description,
             status="discovered"
         )
         db.add(video)
@@ -87,13 +88,31 @@ class IngestionService:
             db.add(channel)
             await db.commit()
 
-    async def update_video_status(self, db: AsyncSession, video_id: str, status: str, transcript: Optional[str] = None) -> None:
+    async def update_video_status(
+        self, 
+        db: AsyncSession, 
+        video_id: str, 
+        status: str, 
+        transcript: Optional[str] = None, 
+        transcript_language: Optional[str] = None,
+        description: Optional[str] = None,
+        upload_date: Optional[str] = None,
+        category: Optional[str] = None
+    ) -> None:
         result = await db.execute(select(Video).where(Video.id == video_id))
         video = result.scalar_one_or_none()
         if video:
             video.status = status
             if transcript:
                 video.transcript = transcript
+            if transcript_language:
+                video.transcript_language = transcript_language
+            if description:
+                video.description = description
+            if upload_date:
+                video.upload_date = upload_date
+            if category:
+                video.category = category
             video.last_attempt = datetime.now()
             db.add(video)
             await db.commit()

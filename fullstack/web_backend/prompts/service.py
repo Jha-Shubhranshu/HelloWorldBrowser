@@ -28,6 +28,7 @@ class PromptService:
             filters=MetadataFilters(),
             top_k=data.top_k,
             use_llm=False,
+            scoped_results=data.scoped_results,
         )
         search_resp = await search_service.search(search_req)
 

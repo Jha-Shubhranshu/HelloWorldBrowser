@@ -11,11 +11,12 @@ export interface MetadataFilters {
 }
 
 export interface SearchRequest {
-  query:         string
-  filters:       MetadataFilters
-  top_k:         number
-  use_llm:       boolean
-  llm_question?: string
+  query:          string
+  filters:        MetadataFilters
+  top_k:          number
+  use_llm:        boolean
+  llm_question?:  string
+  scoped_results?: boolean
 }
 
 export interface VideoResult {
@@ -29,6 +30,7 @@ export interface VideoResult {
   snippet:              string
   channel_joining_date: string
   transcript_language:  string
+  category?:            string
 }
 
 export interface SearchResponse {
@@ -75,8 +77,9 @@ export interface Prompt {
 }
 
 export interface PromptCreate {
-  query_text: string
-  top_k:      number
+  query_text:     string
+  top_k:          number
+  scoped_results?: boolean
 }
 
 export interface PromptList {

@@ -13,12 +13,12 @@ export default function SearchPage({ initialQuery }: Props) {
 
   useEffect(() => {
     if (initialQuery) {
-      mutate({ query: initialQuery, filters: {}, top_k: 5, use_llm: false })
+      mutate({ query: initialQuery, filters: {}, top_k: 5, use_llm: false, scoped_results: false })
     }
   }, [initialQuery, mutate])
 
-  function handleSearch(query: string, filters: MetadataFilters, topK: number) {
-    mutate({ query, filters, top_k: topK, use_llm: false })
+  function handleSearch(query: string, filters: MetadataFilters, topK: number, scopedResults: boolean) {
+    mutate({ query, filters, top_k: topK, use_llm: false, scoped_results: scopedResults })
   }
 
   return (

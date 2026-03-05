@@ -9,13 +9,18 @@ interface Props {
 }
 
 export default function CreatePromptModal({ onClose, onCreate, loading }: Props) {
-  const [query, setQuery] = useState('')
-  const [topK,  setTopK]  = useState(5)
+  const [query, setQuery]   = useState('')
+  const [topK,  setTopK]    = useState(5)
+  const [scoped, setScoped] = useState(false)
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!query.trim()) return
-    onCreate({ query_text: query.trim(), top_k: topK })
+    onCreate({ 
+      query_text: query.trim(), 
+      top_k: topK,
+      scoped_results: scoped
+    })
   }
 
   return (
@@ -41,18 +46,36 @@ export default function CreatePromptModal({ onClose, onCreate, loading }: Props)
               maxLength={1000}
             />
           </label>
-          <label style={styles.label}>
-            Results to fetch
-            <select
-              style={styles.input}
-              value={topK}
-              onChange={e => setTopK(Number(e.target.value))}
-            >
-              {[3, 5, 10, 20].map(n => (
-                <option key={n} value={n}>{n} videos</option>
-              ))}
-            </select>
-          </label>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <label style={{ ...styles.label, flex: 1 }}>
+              Results to fetch
+              <select
+                style={styles.input}
+                value={topK}
+                onChange={e => setTopK(Number(e.target.value))}
+              >
+                {[3, 5, 10, 20].map(n => (
+                  <option key={n} value={n}>{n} videos</option>
+                ))}
+              </select>
+            </label>
+            <label style={{ ...styles.label, flex: 1, cursor: 'pointer' }}>
+              Scoped Results?
+              <div 
+                onClick={() => setScoped(!scoped)}
+                style={{
+                  ...styles.input,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: scoped ? 'var(--accent)' : 'var(--bg-input)',
+                  color: scoped ? '#000' : 'var(--text-3)',
+                  fontWeight: scoped ? 700 : 400,
+                  transition: 'all 0.2s',
+                }}
+              >
+                {scoped ? 'ENABLED' : 'DISABLED'}
+              </div>
+            </label>
+          </div>
           <div style={styles.actions}>
             <button type="button" style={styles.cancelBtn} onClick={onClose}>
               Cancel

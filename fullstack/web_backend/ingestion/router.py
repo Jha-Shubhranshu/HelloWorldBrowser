@@ -52,7 +52,13 @@ async def update_video_status(
     video_id: str,
     status: str,
     transcript: Optional[str] = None,
+    transcript_language: Optional[str] = None,
+    description: Optional[str] = None,
+    upload_date: Optional[str] = None,
+    category: Optional[str] = None,
     db: AsyncSession = Depends(get_session),
 ):
-    await ingestion_service.update_video_status(db, video_id, status, transcript)
+    await ingestion_service.update_video_status(
+        db, video_id, status, transcript, transcript_language, description, upload_date, category
+    )
     return {"status": "ok"}

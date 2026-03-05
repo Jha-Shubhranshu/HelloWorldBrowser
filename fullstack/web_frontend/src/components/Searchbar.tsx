@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react'
 import type { MetadataFilters } from '../api/types'
 
 interface Props {
-  onSearch: (query: string, filters: MetadataFilters, topK: number) => void
+  onSearch: (query: string, filters: MetadataFilters, topK: number, scopedResults: boolean) => void
   isLoading: boolean
   initialQuery?: string
 }
@@ -12,6 +12,7 @@ export default function SearchBar({ onSearch, isLoading, initialQuery }: Props) 
   const [query, setQuery]   = useState(initialQuery || '')
   const [topK,  setTopK]    = useState(5)
   const [lang,  setLang]    = useState('')
+  const [scoped, setScoped] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
 
   function handleSubmit(e: FormEvent) {
@@ -19,7 +20,7 @@ export default function SearchBar({ onSearch, isLoading, initialQuery }: Props) 
     if (!query.trim()) return
     const filters: MetadataFilters = {}
     if (lang.trim()) filters.transcript_language = lang.trim()
-    onSearch(query.trim(), filters, topK)
+    onSearch(query.trim(), filters, topK, scoped)
   }
 
   return (
@@ -84,6 +85,25 @@ export default function SearchBar({ onSearch, isLoading, initialQuery }: Props) 
                 <option key={n} value={n}>{n} videos</option>
               ))}
             </select>
+          </label>
+          <label style={{ ...styles.label, cursor: 'pointer' }}>
+            Scoped Results?
+            <div 
+              onClick={() => setScoped(!scoped)}
+              style={{
+                ...styles.filterInput,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: scoped ? 'var(--accent)' : 'var(--bg-input)',
+                color: scoped ? '#000' : 'var(--text-3)',
+                fontWeight: scoped ? 700 : 400,
+                transition: 'all 0.2s',
+                textAlign: 'center',
+                height: '36px',
+                padding: '0 12px'
+              }}
+            >
+              {scoped ? 'ENABLED' : 'DISABLED'}
+            </div>
           </label>
         </div>
       )}

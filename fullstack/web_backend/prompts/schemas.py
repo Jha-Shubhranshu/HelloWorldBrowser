@@ -9,8 +9,9 @@ from pydantic import BaseModel, Field
 
 
 class PromptCreate(BaseModel):
-    query_text: str = Field(..., min_length=1, max_length=1000)
-    top_k:      int = Field(5, ge=1, le=50)
+    query_text:     str  = Field(..., min_length=1, max_length=1000)
+    top_k:          int  = Field(5, ge=1, le=50)
+    scoped_results: bool = Field(False)
 
 
 class PromptRead(BaseModel):

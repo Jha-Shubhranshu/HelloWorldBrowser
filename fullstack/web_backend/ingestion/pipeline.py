@@ -23,7 +23,8 @@ logger = logging.getLogger(__name__)
 # Pinecone & LangChain
 from pinecone import Pinecone, ServerlessSpec
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage
 
 # Constants
 API_BASE_URL = "http://127.0.0.1:8000/ingestion"
@@ -96,12 +97,22 @@ class ChannelScraper:
                 thumb_el = await card.query_selector("img")
                 thumb = await thumb_el.get_attribute("src") if thumb_el else None
 
+                # Extract upload date and description (metadata)
+                metadata_el = await card.query_selector("div#metadata-line")
+                upload_date = None
+                if metadata_el:
+                    spans = await metadata_el.query_selector_all("span")
+                    if len(spans) >= 2:
+                        upload_date = await spans[1].inner_text()
+
                 results.append({
                     "video_id": video_id,
                     "title": title or "Untitled",
                     "url": video_url,
                     "thumbnail_url": thumb,
-                    "length": length
+                    "length": length,
+                    "upload_date": upload_date,
+                    "description": None # Usually not on the grid page
                 })
             
             await browser.close()
@@ -109,10 +120,12 @@ class ChannelScraper:
 
 class VideoProcessor:
     """Stage 3: Transcript + Vector storage (Real)."""
-    def __init__(self):
+    def __init__(self, profile: str):
+        self.profile = profile
         self.pc = Pinecone(api_key=PINECONE_API_KEY)
         self.index = self._get_or_create_index()
         self.embeddings = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=OPENAI_API_KEY)
+        self.llm = ChatOpenAI(model="gpt-4o-mini", openai_api_key=OPENAI_API_KEY)
         self.splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
 
     def _get_or_create_index(self):
@@ -126,24 +139,93 @@ class VideoProcessor:
             )
         return self.pc.Index(INDEX_NAME)
 
-    def has_english_transcript(self, video_id: str) -> bool:
+    async def categorize_video(self, description: str) -> str:
+        """Use LLM to categorize the video based on its description."""
+        if not description:
+            return "Entertainment"  # Default
+        
+        prompt = f"""
+        Categorize the following YouTube video description into exactly one of these categories:
+        1. News (present developments, timestamping, events, adverts, sponsors)
+        2. Education (laws, generalities, facts, documentation, academics)
+        3. Entertainment (music, sports, events)
+        4. Self Knowledge (philosophy, etymologies, epistemologies, stories, dohas)
+
+        Description: {description[:2000]}
+
+        Respond with ONLY the category name.
         """
-        Check if the video has an English transcript available for free.
-        This helps save ScrapeCreators API credits.
+        try:
+            resp = await self.llm.ainvoke([
+                SystemMessage(content="You are a video categorization expert."),
+                HumanMessage(content=prompt)
+            ])
+            category = resp.content.strip()
+            # Validation
+            valid_categories = ["News", "Education", "Entertainment", "Self Knowledge"]
+            for valid in valid_categories:
+                if valid.lower() in category.lower():
+                    return valid
+            return "Entertainment"
+        except Exception as e:
+            logger.error(f"Categorization failed: {e}")
+            return "Entertainment"
+
+    async def scrape_video_details(self, video_url: str) -> Dict[str, str]:
+        """Scrape description and exact upload date from the video page."""
+        async with async_playwright() as p:
+            browser = await p.chromium.launch_persistent_context(
+                user_data_dir=self.profile,
+                headless=True,
+                args=["--disable-blink-features=AutomationControlled"],
+            )
+            page = await browser.new_page()
+            try:
+                logger.info(f"Scraping extra details for {video_url}")
+                await page.goto(video_url, wait_until="load", timeout=60000)
+                await page.wait_for_timeout(2000)
+
+                # Click "more" in description if needed
+                more_btn = await page.query_selector("tp-yt-paper-button#expand")
+                if more_btn: await more_btn.click()
+
+                description_el = await page.query_selector("div#description-inner")
+                description = await description_el.inner_text() if description_el else None
+                
+                # Exact date is usually in the description area or info line
+                date_el = await page.query_selector("div#info-container span:last-child")
+                if not date_el:
+                    date_el = await page.query_selector("div#formatted-description-contents span:first-child")
+                
+                upload_date = await date_el.inner_text() if date_el else None
+
+                return {
+                    "description": description,
+                    "upload_date": upload_date
+                }
+            except Exception as e:
+                logger.error(f"Failed to scrape video details for {video_url}: {e}")
+                return {}
+            finally:
+                await browser.close()
+
+    def get_transcript_info(self, video_id: str) -> Optional[str]:
+        """
+        Check for available transcripts and return the language code if English is found.
         """
         try:
             transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-            # Check for manually created or auto-generated English transcripts
+            # Try to find an English transcript (manual or auto-generated)
             try:
-                transcript_list.find_transcript(['en'])
-                logger.info(f"✓ English transcript available for {video_id}")
-                return True
+                t = transcript_list.find_transcript(['en'])
+                logger.info(f"✓ English transcript found for {video_id} ({t.language_code})")
+                return t.language_code
             except:
                 logger.info(f"✗ No English transcript found for {video_id}")
-                return False
+                return None
         except Exception as e:
             logger.error(f"Error checking transcript availability for {video_id}: {e}")
-            return False
+            return None
 
     async def fetch_transcript(self, video_url: str) -> Optional[str]:
         """Fetch transcript using ScrapeCreators API if available, else mock."""
@@ -166,19 +248,44 @@ class VideoProcessor:
         except Exception as e:
             logger.error(f"Transcript API failed: {e}")
         return None
-
+                        
     async def process(self, video: Dict[str, Any]) -> str:
         """
         Process a video: check transcript, fetch it, and vector storage.
         Returns the new status for the video.
         """
-        # 1. Transcript Acquisition
+        # 1. Scraping Extra Details (if missing)
+        description = video.get('description')
+        upload_date = video.get('upload_date')
+        category = video.get('category')
+        
+        if not description or not upload_date:
+            details = await self.scrape_video_details(video['url'])
+            description = details.get('description') or description
+            upload_date = details.get('upload_date') or upload_date
+        
+        # 1.5 Categorization (if missing)
+        if not category and description:
+            category = await self.categorize_video(description)
+            logger.info(f"Categorized {video['title']} as {category}")
+
+        # Update DB with new details (if any change)
+        requests.patch(f"{API_BASE_URL}/videos/{video['id']}/status", params={
+            "status": "processing",
+            "description": description,
+            "upload_date": upload_date,
+            "category": category
+        })
+
+        # 2. Transcript Acquisition
         transcript = video.get('transcript')
+        lang_code = video.get('transcript_language')
         if transcript:
             logger.info(f"Using existing transcript from DB for {video['title']}")
         else:
-            # Check if English transcript is available before calling paid API
-            if not self.has_english_transcript(video['video_id']):
+            # Check for English transcript availability
+            lang_code = self.get_transcript_info(video['video_id'])
+            if not lang_code:
                 logger.info(f"Skipping {video['video_id']} - no English transcript available.")
                 return "no_transcript"
 
@@ -190,9 +297,11 @@ class VideoProcessor:
             try:
                 requests.patch(f"{API_BASE_URL}/videos/{video['id']}/status", params={
                     "status": "transcript_fetched",
-                    "transcript": transcript
+                    "transcript": transcript,
+                    "transcript_language": lang_code,
+                    "category": category
                 })
-                logger.info(f"✓ Saved transcript to DB for {video['title']}")
+                logger.info(f"✓ Saved transcript to DB for {video['title']} (Lang: {lang_code})")
             except Exception as e:
                 logger.error(f"Failed to save transcript to DB: {e}")
                 return "failed"
@@ -212,6 +321,10 @@ class VideoProcessor:
                         "video_url": video['url'],
                         "video_title": video['title'],
                         "video_id": video['video_id'],
+                        "video_description": description[:2000] if description else None,
+                        "upload_date": upload_date,
+                        "transcript_language": lang_code,
+                        "category": category,
                         "chunk_index": i,
                         "total_chunks": len(chunks)
                     }
@@ -289,6 +402,6 @@ if __name__ == "__main__":
     pipeline = IngestionPipeline(
         WallScraper(),
         ChannelScraper(PROFILE),
-        VideoProcessor()
+        VideoProcessor(PROFILE)
     )
     asyncio.run(pipeline.start())

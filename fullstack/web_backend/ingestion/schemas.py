@@ -14,6 +14,8 @@ class VideoBase(BaseModel):
     thumbnail_url: Optional[str] = None
     length: Optional[str] = None
     upload_date: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
 
 class VideoCreate(VideoBase):
     channel_id: str
@@ -23,6 +25,8 @@ class VideoRead(VideoBase):
     channel_id: str
     status: str
     transcript: Optional[str] = None
+    transcript_language: Optional[str] = None
+    category: Optional[str] = None
     created_at: datetime
     
     class Config:

@@ -16,11 +16,12 @@ class MetadataFilters(BaseModel):
 
 
 class SearchRequest(BaseModel):
-    query:        str             = Field(...,  description="Natural-language description of desired videos")
-    filters:      MetadataFilters = Field(default_factory=MetadataFilters)
-    top_k:        int             = Field(5, ge=1, le=50)
-    use_llm:      bool            = Field(False)
-    llm_question: Optional[str]   = Field(None)
+    query:          str             = Field(...,  description="Natural-language description of desired videos")
+    filters:        MetadataFilters = Field(default_factory=MetadataFilters)
+    top_k:          int             = Field(5, ge=1, le=50)
+    use_llm:        bool            = Field(False)
+    llm_question:   Optional[str]   = Field(None)
+    scoped_results: bool            = Field(False, description="Enable LLM-based categorization filter")
 
 
 class VideoResult(BaseModel):
@@ -34,6 +35,7 @@ class VideoResult(BaseModel):
     snippet:              str
     channel_joining_date: str
     transcript_language:  str
+    category:             Optional[str] = None
 
 
 class SearchResponse(BaseModel):

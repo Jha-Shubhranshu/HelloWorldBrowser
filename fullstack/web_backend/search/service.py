@@ -39,13 +39,47 @@ class SearchService:
     # ── public ────────────────────────────────────────────────────────────────
 
     async def search(self, req: SearchRequest) -> SearchResponse:
-        log.info(f"Search: '{req.query}'")
+        log.info(f"Search: '{req.query}' (Scoped: {req.scoped_results})")
 
         # 1. Embed query
         query_vector = self._embeddings.embed_query(req.query)
 
         # 2. Build filter
         pinecone_filter = self._build_filter(req.filters)
+        
+        # 2.5 Scoped Results LLM categorization
+        if req.scoped_results:
+            try:
+                cat_prompt = f"""
+                Categorize the following user query into exactly one of these categories:
+                1. News (present developments, timestamping, events, adverts, sponsors)
+                2. Education (laws, generalities, facts, documentation, academics)
+                3. Entertainment (music, sports, events)
+                4. Self Knowledge (philosophy, etymologies, epistemologies, stories, dohas)
+
+                Query: {req.query}
+
+                Respond with ONLY the category name.
+                """
+                resp = self._llm.invoke(cat_prompt)
+                category = resp.content.strip()
+                
+                # Simple validation/normalization
+                valid_categories = ["News", "Education", "Entertainment", "Self Knowledge"]
+                for valid in valid_categories:
+                    if valid.lower() in category.lower():
+                        category = valid
+                        break
+                else:
+                    category = None
+
+                if category:
+                    log.info(f"Query scoped to category: {category}")
+                    if not pinecone_filter:
+                        pinecone_filter = {}
+                    pinecone_filter["category"] = {"$eq": category}
+            except Exception as e:
+                log.warning(f"Query categorization failed: {e}")
 
         # 3. Vector search
         raw = self._index.query(
@@ -75,6 +109,7 @@ class SearchService:
                 snippet=              meta.get("text", "")[:500],
                 channel_joining_date= meta.get("channel_joining_date", ""),
                 transcript_language=  meta.get("transcript_language", ""),
+                category=             meta.get("category"),
             )
             if vurl not in seen or seen[vurl].score < score:
                 seen[vurl] = vr
